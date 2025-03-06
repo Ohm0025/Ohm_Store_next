@@ -19,7 +19,7 @@ const InputForm = ({
       <Label htmlFor={id}>
         {label} {required && <span className="text-red-500">*</span>}
       </Label>
-      <Input id={id} name={id} required={required} {...props} />
+      <Input id={id} name={id} {...props} />
     </div>
   );
 };
