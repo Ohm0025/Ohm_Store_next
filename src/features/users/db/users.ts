@@ -1,8 +1,18 @@
 import { db } from "@//lib/db";
+import {
+  unstable_cacheLife as cacheLife,
+  unstable_cacheTag as cacheTag,
+} from "next/cache";
+import { getUserIdTag } from "./cache";
 
 export const getUserById = async (id: string) => {
+  "use cache";
+
+  cacheLife("hours"); //interval 1 hour
+  cacheTag(getUserIdTag(id)); //set tag for user
+
   try {
-    return await db.user.findUnique({
+    const user = await db.user.findUnique({
       where: {
         id,
         status: "Active",
@@ -18,6 +28,7 @@ export const getUserById = async (id: string) => {
         tel: true,
       },
     });
+    return user;
   } catch (error) {
     console.error("Error Get User By Id : ", error);
     return null;

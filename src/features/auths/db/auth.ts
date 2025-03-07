@@ -1,4 +1,5 @@
 import { signinSchema, signupSchema } from "@/features/auths/schemas/auth";
+import { revalidateUserCache } from "@/features/users/db/cache";
 import { getUserById } from "@/features/users/db/users";
 import { db } from "@/lib/db";
 import { hash, genSalt, compare } from "bcrypt";
@@ -75,6 +76,8 @@ export const signup = async (input: SignupInput) => {
 
     //store token in cookie
     await setCookieToken(token);
+
+    revalidateUserCache(newUser.id);
   } catch (error) {
     console.error("Error Sign up user : ", error);
     return {
