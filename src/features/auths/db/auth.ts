@@ -137,6 +137,5 @@ export const signin = async (input: SigninInput) => {
 
 export const authCheck = async () => {
   const userId = (await headers()).get("x-user-id");
-  console.log("userId", userId);
   return userId ? await getUserById(userId) : null;
 }; //get userid from middleware
