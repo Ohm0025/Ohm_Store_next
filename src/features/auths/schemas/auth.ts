@@ -82,3 +82,13 @@ export const signupSchema = z
     message: ERROR_MESSAGES.confirmPassword,
     path: ["confirmPassword"],
   });
+
+//Main Signin Schema
+export const signinSchema = z.object({
+  email: z.string().email({
+    message: ERROR_MESSAGES.email.format,
+  }),
+  password: z.string().min(MIN_PASSWORD_LENGTH, {
+    message: ERROR_MESSAGES.password.length,
+  }),
+});

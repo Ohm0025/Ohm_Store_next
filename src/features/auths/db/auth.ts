@@ -1,14 +1,20 @@
-import { signupSchema } from "@/features/auths/schemas/auth";
+import { signinSchema, signupSchema } from "@/features/auths/schemas/auth";
+import { getUserById } from "@/features/users/db/users";
 import { db } from "@/lib/db";
-import { hash, genSalt } from "bcrypt";
+import { hash, genSalt, compare } from "bcrypt";
 import { SignJWT } from "jose";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 
 interface SignupInput {
   name: string;
   email: string;
   password: string;
   confirmPassword: string;
+}
+
+interface SigninInput {
+  email: string;
+  password: string;
 }
 
 const generateJwtToken = async (userId: string) => {
@@ -76,3 +82,58 @@ export const signup = async (input: SignupInput) => {
     };
   }
 };
+
+export const signin = async (input: SigninInput) => {
+  try {
+    const { success, data, error } = signinSchema.safeParse(input);
+    if (!success) {
+      return {
+        message: "Please enter correct email and password",
+        error: error.flatten().fieldErrors,
+      };
+    }
+
+    const user = await db.user.findUnique({
+      where: {
+        email: data.email,
+      },
+    });
+
+    if (!user) {
+      return {
+        message: "User not found with this email and password",
+      };
+    }
+
+    if (user.status !== "Active") {
+      return {
+        message: "User is not active",
+      };
+    }
+
+    const isPasswordMatch = await compare(data.password, user.password);
+
+    if (!isPasswordMatch) {
+      return {
+        message: "User not found with this email and password",
+      };
+    }
+
+    //generate token
+    const token = await generateJwtToken(user.id);
+
+    //store token in cookie
+    await setCookieToken(token);
+  } catch (error) {
+    console.error("Error Sign in user : ", error);
+    return {
+      message: "There is an error while signing in user",
+    };
+  }
+};
+
+export const authCheck = async () => {
+  const userId = (await headers()).get("x-user-id");
+  console.log("userId", userId);
+  return userId ? await getUserById(userId) : null;
+}; //get userid from middleware

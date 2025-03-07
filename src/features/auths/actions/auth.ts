@@ -1,7 +1,7 @@
 "use server";
 
 import { InitialFormState } from "@/types/action";
-import { signup } from "../db/auth";
+import { signin, signup } from "../db/auth";
 
 export const authAction = async (
   _prevState: InitialFormState,
@@ -14,7 +14,9 @@ export const authAction = async (
     confirmPassword: formData.get("confirmPassword") as string,
   };
 
-  const result = await signup(rawData);
+  const result = rawData.confirmPassword
+    ? await signup(rawData)
+    : await signin(rawData);
 
   return result && result.message
     ? { success: false, message: result.message, errors: result.error }

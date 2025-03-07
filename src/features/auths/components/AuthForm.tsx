@@ -7,6 +7,7 @@ import SubmitBtn from "@/components/shared/SubmitBtn";
 import AuthFooter from "./AuthFooter";
 import { useForm } from "@/hooks/useForm";
 import { authAction } from "../actions/auth";
+import ErrorMessage from "@/components/shared/errorMessage";
 
 interface AuthFormProps {
   type: "signup" | "signin";
@@ -20,10 +21,10 @@ const AuthForm = ({ type }: AuthFormProps) => {
     type = "text"
   ) => {
     return (
-      <div>
+      <div className="flex flex-col gap-2">
         <InputForm label={label} id={id} required={required} type={type} />
         {errors[id] && (
-          <span className="text-red-500 text-sm">{errors[id]}</span> //get only the first error
+          <ErrorMessage error={errors[id].join(",")} /> //get only the first error
         )}
       </div>
     );
