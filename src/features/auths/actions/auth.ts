@@ -1,7 +1,7 @@
 "use server";
 
 import { InitialFormState } from "@/types/action";
-import { signin, signup } from "../db/auth";
+import { signin, signout, signup } from "../db/auth";
 
 export const authAction = async (
   _prevState: InitialFormState,
@@ -24,4 +24,11 @@ export const authAction = async (
         success: true,
         message: rawData.confirmPassword ? "register success" : "login success",
       };
+};
+
+export const signoutAction = async () => {
+  const result = await signout();
+  return result && result.message
+    ? { success: false, message: result.message }
+    : { success: true, message: "signout success" };
 };

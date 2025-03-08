@@ -139,3 +139,13 @@ export const authCheck = async () => {
   const userId = (await headers()).get("x-user-id");
   return userId ? await getUserById(userId) : null;
 }; //get userid from middleware
+
+export const signout = async () => {
+  try {
+    const cookie = await cookies();
+    cookie.delete("token");
+  } catch (err) {
+    console.error("Error sign out user : ", err);
+    return { message: "There is error at sign out function" };
+  }
+};
