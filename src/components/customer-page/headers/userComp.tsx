@@ -7,6 +7,7 @@ import { useSignout } from "@/hooks/useSignout";
 import { Loader2 } from "lucide-react";
 import { UserType } from "@/types/user";
 import { Card, CardContent } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Image from "next/image";
 
 interface UserCompProps {
@@ -30,23 +31,35 @@ export const AuthBtn = () => (
 
 //asChild for link in button
 
-export const SignoutBtn = () => {
+export const SignoutBtn = ({ isMobile = false }) => {
   const { isPending, handleSignout } = useSignout();
 
+  if (isMobile) {
+    return (
+      <SheetClose asChild>
+        <Button
+          size={"lg"}
+          disabled={isPending}
+          variant="destructive"
+          onClick={handleSignout}>
+          {isPending ? (
+            <Loader2 size={20} className="animate-spin" />
+          ) : (
+            "Sign Out"
+          )}
+        </Button>
+      </SheetClose>
+    );
+  }
   return (
-    <SheetClose asChild>
-      <Button
-        size={"lg"}
-        disabled={isPending}
-        variant="destructive"
-        onClick={handleSignout}>
-        {isPending ? (
-          <Loader2 size={20} className="animate-spin" />
-        ) : (
-          "Sign Out"
-        )}
-      </Button>
-    </SheetClose>
+    <Button
+      className="w-full mt-4"
+      size={"lg"}
+      disabled={isPending}
+      variant="destructive"
+      onClick={handleSignout}>
+      {isPending ? <Loader2 size={20} className="animate-spin" /> : "Sign Out"}
+    </Button>
   );
 };
 
@@ -67,4 +80,26 @@ export const UserAvatar = ({ user }: UserCompProps) => (
       </CardContent>
     </Card>
   </div>
+);
+
+export const UserAvatarSmall = ({ user }: UserCompProps) => (
+  <Avatar className="border-2 border-primary">
+    <AvatarImage src={user.picture || undefined} alt={user.name || "User"} />
+    <AvatarFallback className="text-primary-foreground bg-primary">
+      {user.name
+        ? user.name.slice(0, 2).toUpperCase()
+        : user.email.slice(0, 2).toUpperCase()}
+    </AvatarFallback>
+  </Avatar>
+);
+
+export const UserDropDown = ({ user }: UserCompProps) => (
+  <Avatar className="size-16 border-2 border-primary">
+    <AvatarImage src={user.picture || undefined} alt={user.name || "User"} />
+    <AvatarFallback className="text-lg">
+      {user.name
+        ? user.name.slice(0, 2).toUpperCase()
+        : user.email.slice(0, 2).toUpperCase()}
+    </AvatarFallback>
+  </Avatar>
 );
