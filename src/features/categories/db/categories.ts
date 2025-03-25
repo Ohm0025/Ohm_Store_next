@@ -3,7 +3,11 @@ import {
   unstable_cacheLife as cacheLife,
   unstable_cacheTag as cacheTag,
 } from "next/cache";
-import { getCategoryGlobalTag } from "./cache";
+import { getCategoryGlobalTag, revalidateCategoryCache } from "./cache";
+import { categorySchema } from "../schemas/categories";
+import { authCheck } from "@/features/auths/db/auth";
+import { canCreateCategory } from "../permissions/categories";
+import { redirect } from "next/navigation";
 
 interface CreateCategoryInput {
   name: string;
@@ -33,7 +37,35 @@ export const getCategories = async () => {
 };
 
 export const createCategory = async (input: CreateCategoryInput) => {
+  const user = await authCheck();
+  if (!user || !canCreateCategory(user)) {
+    redirect("/");
+  }
   try {
+    const { success, data, error } = categorySchema.safeParse(input);
+    if (!success) {
+      return {
+        message: "Please Enter Valid Data",
+        error: error.flatten().fieldErrors,
+      };
+    }
+
+    //Check exist category
+    const checkCat = await db.categories.findFirst({
+      where: { name: data.name },
+    });
+    if (checkCat) {
+      return {
+        message: "This category already exist",
+      };
+    }
+
+    //create new category
+    const newCat = await db.categories.create({
+      data: { name: data.name },
+    });
+
+    revalidateCategoryCache(newCat.id);
   } catch (error) {
     console.error("Error adding category : ", error);
     return {
