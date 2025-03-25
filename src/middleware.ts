@@ -11,6 +11,7 @@ const decryptJWT = async (token: string): Promise<Payload | null> => {
     const { payload } = await jwtVerify(token, secret);
     return payload as Payload;
   } catch (err) {
+    console.error("Error decryp :", err);
     return null;
   }
 };
@@ -36,5 +37,6 @@ export const config = {
   matcher: [
     "/",
     "/auth/:path*", // /auth /auth/signup /auth/signin
+    "/admin/:path*",
   ],
 };

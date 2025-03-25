@@ -1,4 +1,4 @@
-import { useState, useEffect, useActionState, use } from "react";
+import { useState, useEffect, useActionState } from "react";
 import { useRouter } from "next/navigation";
 import { ActionType, initialFormState } from "@/types/action";
 import { toast } from "sonner";
@@ -19,12 +19,12 @@ export const useForm = (action: ActionType, route?: string) => {
     if (state.message) {
       if (state.success) {
         toast.success(state.message);
-        route && router.push(route);
+        if (route) router.push(route);
       } else {
         toast.error(state.message);
       }
     }
-  }, [state, route, router, toast]);
+  }, [state, route, router]);
 
   const clearErrors = () => setErrors({});
 
