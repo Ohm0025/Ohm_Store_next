@@ -6,10 +6,18 @@ import {
 import { getCategoryGlobalTag, revalidateCategoryCache } from "./cache";
 import { categorySchema } from "../schemas/categories";
 import { authCheck } from "@/features/auths/db/auth";
-import { canCreateCategory } from "../permissions/categories";
+import {
+  canCreateCategory,
+  canUpdateCategory,
+} from "../permissions/categories";
 import { redirect } from "next/navigation";
 
 interface CreateCategoryInput {
+  name: string;
+}
+
+interface UpdateCategoryInput {
+  id: string;
   name: string;
 }
 
@@ -70,6 +78,65 @@ export const createCategory = async (input: CreateCategoryInput) => {
     console.error("Error adding category : ", error);
     return {
       message: "Something went wrong , pls try again later",
+    };
+  }
+};
+
+export const updateCategory = async (input: UpdateCategoryInput) => {
+  const user = await authCheck();
+
+  if (!user || !canUpdateCategory(user)) {
+    redirect("/");
+  }
+
+  try {
+    const { success, data, error } = categorySchema.safeParse(input);
+    if (!success) {
+      return {
+        message: "Please enter valid data",
+        error: error.flatten().fieldErrors,
+      };
+    }
+
+    // check exist data
+    const existCat = await db.categories.findUnique({
+      where: {
+        id: input.id,
+      },
+    });
+
+    if (!existCat) {
+      return {
+        message: "Category not found",
+      };
+    }
+
+    // check if same as another category
+    const duplicateCat = await db.categories.findFirst({
+      where: { name: data.name, id: { not: input.id } },
+    });
+
+    if (duplicateCat) {
+      return {
+        message: "This category already exist",
+      };
+    }
+
+    // update data
+    const updateCat = await db.categories.update({
+      where: {
+        id: input.id,
+      },
+      data: {
+        name: data.name,
+      },
+    });
+
+    revalidateCategoryCache(updateCat.id);
+  } catch (error) {
+    console.error("error update category : ", error);
+    return {
+      message: "Somthing went wrong , pls try again later",
     };
   }
 };
