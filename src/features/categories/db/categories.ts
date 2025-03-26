@@ -183,3 +183,7 @@ export const changeCategoryStatus = async (
 export const removeCategory = async (id: string) => {
   return await changeCategoryStatus(id, "Inactive");
 };
+
+export const reactivateCategory = async (id: string) => {
+  return await changeCategoryStatus(id, "Active");
+};

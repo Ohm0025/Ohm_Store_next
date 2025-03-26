@@ -14,16 +14,23 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CategoryType } from "@/types/category";
-import { MoreVertical, Pencil, Search, Trash2 } from "lucide-react";
-import React, { useState } from "react";
+import { MoreVertical, Pencil, RefreshCcw, Search, Trash2 } from "lucide-react";
+import React, { useEffect, useState } from "react";
 import EditCategoryModal from "./edit-category-modal";
 import DeleteCatModal from "./deleteCatModal";
+import ReactiveCatModal from "./reactive-cat-modal";
 
 interface CategoryListProps {
   categories: CategoryType[];
 }
 
 const CategoryList = ({ categories }: CategoryListProps) => {
+  const [activeTab, setActiveTab] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const [filteredCategories, setFilteredCategories] =
+    useState<CategoryType[]>(categories);
+
   const [isEditModal, setIsEditModal] = useState(false);
   const handleEditClick = (category: CategoryType) => {
     setSelectedCategory(category);
@@ -39,12 +46,41 @@ const CategoryList = ({ categories }: CategoryListProps) => {
     setIsDeleteModal(true);
   };
 
+  const [isReactiveModal, setIsReactiveModal] = useState(false);
+  const handleReactiveClick = (category: CategoryType) => {
+    setSelectedCategory(category);
+    setIsReactiveModal(true);
+  };
+
+  const handleTabActive = (value: string) => {
+    setActiveTab(value);
+  };
+
+  const handleSearchTerm = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(event.target.value);
+  };
+
+  useEffect(() => {
+    let result = [...categories];
+    if (activeTab === "active") {
+      result = result.filter((c) => c.status === "Active");
+    } else if (activeTab === "inactive") {
+      result = result.filter((c) => c.status === "Inactive");
+    }
+    if (searchTerm) {
+      result = result.filter((c) =>
+        c.name?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+    setFilteredCategories(result);
+  }, [categories, activeTab, searchTerm]);
+
   return (
     <>
       <Card>
         <CardHeader className="pb-4">
           <CardTitle className="text-lg sm:text-xl">Category List</CardTitle>
-          <Tabs>
+          <Tabs value={activeTab} onValueChange={handleTabActive}>
             <TabsList className="grid grid-cols-3 mb-4">
               <TabsTrigger value="all">All Categories</TabsTrigger>
               <TabsTrigger value="active">Active</TabsTrigger>
@@ -56,7 +92,12 @@ const CategoryList = ({ categories }: CategoryListProps) => {
                 size={16}
                 className="absolute left-2 text-muted-foreground"
               />
-              <Input placeholder="Search Category..." className="pl-8" />
+              <Input
+                onChange={handleSearchTerm}
+                value={searchTerm}
+                placeholder="Search Category..."
+                className="pl-8"
+              />
             </div>
           </Tabs>
         </CardHeader>
@@ -75,8 +116,8 @@ const CategoryList = ({ categories }: CategoryListProps) => {
           </div>
 
           <ScrollArea className="h-[350px] sm:h-[420px]">
-            {categories.length > 0 ? (
-              categories.map((category, index) => (
+            {filteredCategories.length > 0 ? (
+              filteredCategories.map((category, index) => (
                 <div
                   className="grid grid-cols-12 py-3 px-2 sm:px-4 border-t items-center hover:bg-gray-50 transition-colors duration-100 text-sm"
                   key={index}>
@@ -106,13 +147,23 @@ const CategoryList = ({ categories }: CategoryListProps) => {
                         onClick={() => handleEditClick(category)}>
                         <Pencil size={15} />
                       </Button>
-                      <Button
-                        variant={"ghost"}
-                        size={"icon"}
-                        className="size-7"
-                        onClick={() => handleDeleteClick(category)}>
-                        <Trash2 size={15} />
-                      </Button>
+                      {category.status === "Active" ? (
+                        <Button
+                          variant={"ghost"}
+                          size={"icon"}
+                          className="size-7"
+                          onClick={() => handleDeleteClick(category)}>
+                          <Trash2 size={15} />
+                        </Button>
+                      ) : (
+                        <Button
+                          variant={"ghost"}
+                          size={"icon"}
+                          className="size-7"
+                          onClick={() => handleReactiveClick(category)}>
+                          <RefreshCcw size={15} />
+                        </Button>
+                      )}
                     </div>
                     {/* desktop action */}
                     <div className="hidden md:block">
@@ -135,11 +186,22 @@ const CategoryList = ({ categories }: CategoryListProps) => {
 
                           <DropdownMenuSeparator />
 
-                          <DropdownMenuItem
-                            onClick={() => handleDeleteClick(category)}>
-                            <Trash2 size={15} className="text-destructive" />
-                            <span className="text-destructive">Delete</span>
-                          </DropdownMenuItem>
+                          {category.status === "Active" ? (
+                            <DropdownMenuItem
+                              onClick={() => handleDeleteClick(category)}>
+                              <Trash2 size={15} className="text-destructive" />
+                              <span className="text-destructive">Delete</span>
+                            </DropdownMenuItem>
+                          ) : (
+                            <DropdownMenuItem
+                              onClick={() => handleReactiveClick(category)}>
+                              <RefreshCcw
+                                size={15}
+                                className="text-destructive"
+                              />
+                              <span className="text-destructive">Reactive</span>
+                            </DropdownMenuItem>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
@@ -164,6 +226,12 @@ const CategoryList = ({ categories }: CategoryListProps) => {
       <DeleteCatModal
         open={isDeleteModal}
         onOpenChange={setIsDeleteModal}
+        category={selectedCategory}
+      />
+
+      <ReactiveCatModal
+        open={isReactiveModal}
+        onOpenChange={setIsReactiveModal}
         category={selectedCategory}
       />
     </>
