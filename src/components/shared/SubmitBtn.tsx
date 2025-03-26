@@ -19,8 +19,8 @@ const SubmitBtn = ({
     <Button
       disabled={pending}
       type="submit"
-      {...props}
-      className="cursor-pointer w-full">
+      className="cursor-pointer w-full"
+      {...props}>
       {pending ? (
         <Loader2 size={16} className="animate-spin" />
       ) : (

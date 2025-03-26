@@ -1,7 +1,11 @@
 "use server";
 
 import { InitialFormState } from "@/types/action";
-import { createCategory, updateCategory } from "../db/categories";
+import {
+  createCategory,
+  removeCategory,
+  updateCategory,
+} from "../db/categories";
 
 export const categoryAction = async (
   _prevState: InitialFormState,
@@ -25,5 +29,24 @@ export const categoryAction = async (
     : {
         success: true,
         message: rawData.id ? "update success" : "create success",
+      };
+};
+
+export const deleteCategoryAction = async (
+  _prevState: InitialFormState,
+  formData: FormData
+) => {
+  const id = formData.get("category-id") as string;
+
+  const result = await removeCategory(id);
+
+  return result && result.message
+    ? {
+        success: false,
+        message: result.message,
+      }
+    : {
+        success: true,
+        message: "Category deleted successfully",
       };
 };
