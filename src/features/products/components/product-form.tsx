@@ -26,14 +26,20 @@ import Form from "next/form";
 import React, { useState } from "react";
 import { productAction } from "../actions/products";
 import ErrorMessage from "@/components/shared/errorMessage";
+import ProductImageUpload from "./product-image-upload";
 
 interface ProductFormProps {
   categories: CategoryType[];
 }
 
 const ProductForm = ({ categories }: ProductFormProps) => {
+  //Price state
   const [basePrice, setBasePrice] = useState("");
   const [salePrice, setSalePrice] = useState("");
+
+  //Image state
+  const [productImages, setProductImages] = useState<File[]>([]);
+  const [mainImageIndex, setMainImageIndex] = useState(0);
 
   const { errors, formAction, isPending, clearErrors } = useForm(
     productAction,
@@ -56,6 +62,20 @@ const ProductForm = ({ categories }: ProductFormProps) => {
     return `${discount.toFixed(2)}%`;
   };
 
+  const handleImageChange = (images: File[], mainImageIndex: number) => {
+    setProductImages(images);
+    setMainImageIndex(mainImageIndex);
+  };
+
+  const handleSubmit = async (formData: FormData) => {
+    if (productImages.length > 0) {
+      productImages.forEach((file) => {
+        formData.append("images", file);
+      });
+      formData.append("main-image-index", mainImageIndex.toString());
+    }
+    return formAction(formData);
+  };
   return (
     <Card className="max-w-4xl mx-auto">
       <CardHeader>
@@ -66,7 +86,7 @@ const ProductForm = ({ categories }: ProductFormProps) => {
       </CardHeader>
 
       <Form
-        action={formAction}
+        action={handleSubmit}
         onChange={clearErrors}
         className="flex flex-col gap-4">
         <CardContent className="flex flex-col gap-6">
@@ -162,6 +182,10 @@ const ProductForm = ({ categories }: ProductFormProps) => {
                   )}
                 </div>
               </div>
+
+              {/* Product Image Section */}
+              <ProductImageUpload onImageChange={handleImageChange} />
+
               {/* Sale Price */}
               <div>
                 <div className="flex flex-col gap-2">
@@ -173,7 +197,7 @@ const ProductForm = ({ categories }: ProductFormProps) => {
                     step="0.01"
                     placeholder="0.00"
                     required
-                    value={salePrice}
+                    defaultValue={basePrice}
                     onChange={(e) => setSalePrice(e.target.value)}
                   />
                   {errors.price && <ErrorMessage error={errors.price[0]} />}

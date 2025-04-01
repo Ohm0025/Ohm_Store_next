@@ -24,7 +24,7 @@ interface HeaderAdminProps {
 const HeaderAdmin = ({ user }: HeaderAdminProps) => {
   const { toggleSidebar } = useSideBar();
   return (
-    <header className="fixed top-0 inset-x-0 md:left-64 h-16 border-b z-10 transition-all duration-200">
+    <header className="fixed top-0 inset-x-0 md:left-64 h-16 bg-card border-b z-10 transition-all duration-200">
       <div className="flex items-center h-full justify-between px-4">
         {/* Taggle Sidebar button */}
         <Button

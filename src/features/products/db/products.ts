@@ -17,6 +17,8 @@ interface CreateProductInput {
   price: number;
   stock: number;
   categoryId: string;
+  images: Array<{ url: string; fileId: string }>;
+  mainImageIndex: number;
 }
 
 export const getProducts = async () => {
@@ -35,6 +37,12 @@ export const getProducts = async () => {
             status: true,
           },
         },
+        images: {
+          where: {
+            isMain: true,
+          },
+          take: 1, //get only 1 pic
+        },
       },
     });
 
@@ -42,6 +50,7 @@ export const getProducts = async () => {
       ...product,
       lowStock: 5,
       sku: product.id.substring(0, 8).toUpperCase(),
+      mainImage: product.images.length > 0 ? product.images[0] : null,
     }));
   } catch (error) {
     console.error("Error getting products : ", error);
@@ -76,17 +85,34 @@ export const createProduct = async (input: CreateProductInput) => {
     }
 
     // create new product
-    const newProduct = await db.product.create({
-      data: {
-        title: data.title,
-        description: data.description,
-        cost: data.cost,
-        basePrice: data.basePrice,
-        price: data.price,
-        stock: data.stock,
-        categoriesId: data.categoryId,
-      },
-    });
+    const newProduct = await db.$transaction(async (prisma) => {
+      const product = await prisma.product.create({
+        data: {
+          title: data.title,
+          description: data.description,
+          cost: data.cost,
+          basePrice: data.basePrice,
+          price: data.price,
+          stock: data.stock,
+          categoriesId: data.categoryId,
+        },
+      });
+      if (input.images && input.images.length > 0) {
+        await Promise.all(
+          input.images.map((image, index) => {
+            return prisma.productImage.create({
+              data: {
+                url: image.url,
+                fileId: image.fileId,
+                isMain: index === input.mainImageIndex,
+                productId: product.id,
+              },
+            });
+          })
+        );
+      }
+      return product;
+    }); //roll-back when failure happen
 
     revalidateProductCache(newProduct.id);
   } catch (error) {

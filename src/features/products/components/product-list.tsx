@@ -125,7 +125,10 @@ const ProductList = ({ products }: ProductListProps) => {
                       <Image
                         width={40}
                         height={40}
-                        src="/images/no-product-image.webp"
+                        src={
+                          product.mainImage?.url ||
+                          "/images/no-product-image.webp"
+                        }
                         className="object-cover rounded-md"
                         alt={product.title}></Image>
                     </TableCell>
