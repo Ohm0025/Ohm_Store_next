@@ -27,12 +27,14 @@ import React, { useState } from "react";
 import { productAction } from "../actions/products";
 import ErrorMessage from "@/components/shared/errorMessage";
 import ProductImageUpload from "./product-image-upload";
+import { ProductType } from "@/types/product";
 
 interface ProductFormProps {
   categories: CategoryType[];
+  product: ProductType | null;
 }
 
-const ProductForm = ({ categories }: ProductFormProps) => {
+const ProductForm = ({ categories, product }: ProductFormProps) => {
   //Price state
   const [basePrice, setBasePrice] = useState("");
   const [salePrice, setSalePrice] = useState("");
@@ -40,6 +42,7 @@ const ProductForm = ({ categories }: ProductFormProps) => {
   //Image state
   const [productImages, setProductImages] = useState<File[]>([]);
   const [mainImageIndex, setMainImageIndex] = useState(0);
+  const [deletedImageIds, setDeletedImageIds] = useState<string[]>([]);
 
   const { errors, formAction, isPending, clearErrors } = useForm(
     productAction,
@@ -62,17 +65,30 @@ const ProductForm = ({ categories }: ProductFormProps) => {
     return `${discount.toFixed(2)}%`;
   };
 
-  const handleImageChange = (images: File[], mainImageIndex: number) => {
+  const handleImageChange = (
+    images: File[],
+    mainImageIndex: number,
+    deletedIds: string[] = []
+  ) => {
     setProductImages(images);
     setMainImageIndex(mainImageIndex);
+    setDeletedImageIds(deletedIds);
   };
 
   const handleSubmit = async (formData: FormData) => {
+    if (product) {
+      formData.append("product-id", product.id);
+    }
+
     if (productImages.length > 0) {
       productImages.forEach((file) => {
         formData.append("images", file);
       });
       formData.append("main-image-index", mainImageIndex.toString());
+    }
+
+    if (deletedImageIds.length > 0) {
+      formData.append("deleted-image-ids", JSON.stringify(deletedImageIds));
     }
     return formAction(formData);
   };
@@ -99,6 +115,7 @@ const ProductForm = ({ categories }: ProductFormProps) => {
                 id="title"
                 placeholder="Enter product title"
                 required
+                defaultValue={product?.title}
               />
               {errors.title && (
                 <ErrorMessage error={errors.title[0]}></ErrorMessage>
@@ -114,7 +131,8 @@ const ProductForm = ({ categories }: ProductFormProps) => {
                 className="min-h-20"
                 id="description"
                 name="description"
-                placeholder="Enter description product"></Textarea>
+                placeholder="Enter description product"
+                defaultValue={product?.description}></Textarea>
               {errors.description && (
                 <ErrorMessage error={errors.description[0]} />
               )}
@@ -126,7 +144,7 @@ const ProductForm = ({ categories }: ProductFormProps) => {
                 Category
                 <span className="text-red-500">*</span>
               </Label>
-              <Select name="category-id">
+              <Select name="category-id" defaultValue={product?.categoriesId}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select Category" />
                 </SelectTrigger>
@@ -147,6 +165,12 @@ const ProductForm = ({ categories }: ProductFormProps) => {
             </div>
           </div>
 
+          {/* Product Image Section */}
+          <ProductImageUpload
+            onImageChange={handleImageChange}
+            existingImages={product?.images}
+          />
+
           {/* Pricing Information */}
           <div className="flex flex-col gap-4">
             <h3 className="font-medium">Pricing Information</h3>
@@ -160,6 +184,7 @@ const ProductForm = ({ categories }: ProductFormProps) => {
                   min="0"
                   step="0.01"
                   placeholder="0.00"
+                  defaultValue={product?.cost}
                 />
                 {errors.cost && <ErrorMessage error={errors.cost[0]} />}
               </div>
@@ -174,7 +199,7 @@ const ProductForm = ({ categories }: ProductFormProps) => {
                     step="0.01"
                     placeholder="0.00"
                     required
-                    value={basePrice}
+                    defaultValue={product?.basePrice || basePrice}
                     onChange={(e) => setBasePrice(e.target.value)}
                   />
                   {errors.basePrice && (
@@ -182,9 +207,6 @@ const ProductForm = ({ categories }: ProductFormProps) => {
                   )}
                 </div>
               </div>
-
-              {/* Product Image Section */}
-              <ProductImageUpload onImageChange={handleImageChange} />
 
               {/* Sale Price */}
               <div>
@@ -197,7 +219,7 @@ const ProductForm = ({ categories }: ProductFormProps) => {
                     step="0.01"
                     placeholder="0.00"
                     required
-                    defaultValue={basePrice}
+                    defaultValue={product?.price || basePrice}
                     onChange={(e) => setSalePrice(e.target.value)}
                   />
                   {errors.price && <ErrorMessage error={errors.price[0]} />}
@@ -224,6 +246,7 @@ const ProductForm = ({ categories }: ProductFormProps) => {
                 min="0"
                 placeholder="0"
                 required
+                defaultValue={product?.stock}
               />
               {errors.stock && <ErrorMessage error={errors.stock[0]} />}
             </div>
@@ -231,7 +254,11 @@ const ProductForm = ({ categories }: ProductFormProps) => {
         </CardContent>
 
         <CardFooter>
-          <SubmitBtn name="Save Product" icon={Save} pending={isPending} />
+          <SubmitBtn
+            name={product ? "Update Product" : "Save Product"}
+            icon={Save}
+            pending={isPending}
+          />
         </CardFooter>
       </Form>
     </Card>
