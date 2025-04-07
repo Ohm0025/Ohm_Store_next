@@ -5,6 +5,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 
 interface ModalProps {
   open: boolean;
@@ -12,6 +13,7 @@ interface ModalProps {
   children: React.ReactNode;
   title: string;
   description: string;
+  className?: string;
 }
 
 const Modal = ({
@@ -20,10 +22,11 @@ const Modal = ({
   children,
   title,
   description,
+  className,
 }: ModalProps) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className={cn("sm:max-w-md", className)}>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
 

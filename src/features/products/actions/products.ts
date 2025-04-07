@@ -1,7 +1,11 @@
 "use server";
 
 import { InitialFormState } from "@/types/action";
-import { createProduct, updateProduct } from "../db/products";
+import {
+  changeProductStatus,
+  createProduct,
+  updateProduct,
+} from "../db/products";
 import { uploadToImageKit } from "@/lib/imageKit";
 
 export const productAction = async (
@@ -69,5 +73,43 @@ export const productAction = async (
         message: processedData.id
           ? "Product updated successfully"
           : "Product created successfully",
+      };
+};
+
+export const deleteProductAction = async (
+  _prevState: InitialFormState,
+  formData: FormData
+) => {
+  const id = formData.get("product-id") as string;
+
+  const result = await changeProductStatus(id, "Inactive");
+
+  return result && result.message
+    ? {
+        success: false,
+        message: result.message,
+      }
+    : {
+        success: true,
+        message: "Product deleted successfully",
+      };
+};
+
+export const restoreProductAction = async (
+  _prevState: InitialFormState,
+  formData: FormData
+) => {
+  const id = formData.get("product-id") as string;
+
+  const result = await changeProductStatus(id, "Active");
+
+  return result && result.message
+    ? {
+        success: false,
+        message: result.message,
+      }
+    : {
+        success: true,
+        message: "Product restored successfully",
       };
 };

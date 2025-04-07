@@ -1,3 +1,5 @@
+"use client";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,13 +33,69 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import React from "react";
+import React, { useEffect, useState } from "react";
+import DeleteProductModal from "./delete-product-modal";
+import RestoreProductModal from "./restore-product-modal";
+import ProductDetailModal from "./product-detail-modal";
 
 interface ProductListProps {
   products: ProductType[];
 }
 
 const ProductList = ({ products }: ProductListProps) => {
+  const [activeTab, setActiveTab] = useState("all");
+  const [filteredProducts, setFilteredProducts] = useState(products);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const [isDeleteModal, setIsDeleteModal] = useState(false);
+  const [isRestoreModal, setIsRestoreModal] = useState(false);
+  const [isDetailModal, setIsDetailModal] = useState(false);
+
+  const [selectedProduct, setSelectedProduct] = useState<ProductType | null>(
+    null
+  );
+
+  useEffect(() => {
+    let result = [...products];
+    if (activeTab === "active") {
+      result = result.filter((p) => p.status === "Active");
+    } else if (activeTab === "inactive") {
+      result = result.filter((p) => p.status === "Inactive");
+    } else if (activeTab === "low-stock") {
+      result = result.filter((p) => p.stock <= p.lowStock);
+    }
+
+    if (searchTerm) {
+      result = result.filter((p) =>
+        p.title.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    setFilteredProducts(result);
+  }, [products, activeTab, searchTerm]);
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+  };
+
+  const handleDeleteClick = (product: ProductType) => {
+    setSelectedProduct(product);
+    setIsDeleteModal(true);
+  };
+
+  const handleRestoreClick = (product: ProductType) => {
+    setSelectedProduct(product);
+    setIsRestoreModal(true);
+  };
+
+  const handleDetailClick = (product: ProductType) => {
+    setSelectedProduct(product);
+    setIsDetailModal(true);
+  };
+
+  const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(event.target.value);
+  };
   return (
     <>
       <Card>
@@ -52,7 +110,7 @@ const ProductList = ({ products }: ProductListProps) => {
             </Button>
           </div>
 
-          <Tabs>
+          <Tabs value={activeTab} onValueChange={handleTabChange}>
             <TabsList className="grid grid-cols-4 mb-4">
               <TabsTrigger value="all">All</TabsTrigger>
               <TabsTrigger value="active">Active</TabsTrigger>
@@ -83,11 +141,7 @@ const ProductList = ({ products }: ProductListProps) => {
                 </Badge>
                 <Badge variant={"outline"} className="sm:px-3 py-1">
                   <span className="font-semibold text-amber-600">
-                    {
-                      products.filter(
-                        (p) => p.stock <= p.lowStock && p.status === "Active"
-                      ).length
-                    }
+                    {products.filter((p) => p.stock <= p.lowStock).length}
                   </span>
                   Low Stock
                 </Badge>
@@ -98,7 +152,11 @@ const ProductList = ({ products }: ProductListProps) => {
                   size={16}
                   className="absolute left-2 top-2.5 text-muted-foreground"
                 />
-                <Input placeholder="Search Products ..." className="pl-8" />
+                <Input
+                  onChange={handleSearch}
+                  placeholder="Search Products ..."
+                  className="pl-8"
+                />
               </div>
             </div>
           </Tabs>
@@ -118,8 +176,8 @@ const ProductList = ({ products }: ProductListProps) => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {products.length > 0 ? (
-                products.map((product, index) => (
+              {filteredProducts.length > 0 ? (
+                filteredProducts.map((product, index) => (
                   <TableRow key={index}>
                     <TableCell>
                       <Image
@@ -182,7 +240,8 @@ const ProductList = ({ products }: ProductListProps) => {
                         </DropdownMenuTrigger>
 
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleDetailClick(product)}>
                             <Eye size={15} />
                             <span>View</span>
                           </DropdownMenuItem>
@@ -197,12 +256,14 @@ const ProductList = ({ products }: ProductListProps) => {
                           <DropdownMenuSeparator />
 
                           {product.status === "Active" ? (
-                            <DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleDeleteClick(product)}>
                               <Trash2 size={15} className="text-destructive" />
                               <span className="text-destructive">Delete</span>
                             </DropdownMenuItem>
                           ) : (
-                            <DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleRestoreClick(product)}>
                               <RefreshCcw
                                 size={15}
                                 className="text-green-600"
@@ -228,6 +289,22 @@ const ProductList = ({ products }: ProductListProps) => {
           </Table>
         </CardContent>
       </Card>
+
+      <DeleteProductModal
+        open={isDeleteModal}
+        onOpenChange={setIsDeleteModal}
+        product={selectedProduct}
+      />
+      <RestoreProductModal
+        open={isRestoreModal}
+        onOpenChange={setIsRestoreModal}
+        product={selectedProduct}
+      />
+      <ProductDetailModal
+        open={isDetailModal}
+        onOpenChange={setIsDetailModal}
+        product={selectedProduct}
+      />
     </>
   );
 };

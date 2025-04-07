@@ -36,8 +36,12 @@ interface ProductFormProps {
 
 const ProductForm = ({ categories, product }: ProductFormProps) => {
   //Price state
-  const [basePrice, setBasePrice] = useState("");
-  const [salePrice, setSalePrice] = useState("");
+  const [basePrice, setBasePrice] = useState(
+    product ? product.basePrice.toString() : ""
+  );
+  const [salePrice, setSalePrice] = useState(
+    product ? product.price.toString() : ""
+  );
 
   //Image state
   const [productImages, setProductImages] = useState<File[]>([]);
@@ -84,8 +88,8 @@ const ProductForm = ({ categories, product }: ProductFormProps) => {
       productImages.forEach((file) => {
         formData.append("images", file);
       });
-      formData.append("main-image-index", mainImageIndex.toString());
     }
+    formData.append("main-image-index", mainImageIndex.toString());
 
     if (deletedImageIds.length > 0) {
       formData.append("deleted-image-ids", JSON.stringify(deletedImageIds));
