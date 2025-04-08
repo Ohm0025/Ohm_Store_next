@@ -1,14 +1,11 @@
-"use client";
-
-import { Button } from "@/components/ui/button";
+import Hero from "@/components/customer-page/home/hero";
 import React from "react";
 
 const HomePage = () => {
-  const handleOnClick = () => console.log("Hello World");
   return (
-    <Button className="hover:cursor-pointer" onClick={handleOnClick}>
-      Submit
-    </Button>
+    <div>
+      <Hero />
+    </div>
   );
 };
 

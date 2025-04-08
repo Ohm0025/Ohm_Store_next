@@ -2,6 +2,7 @@ import "./globals.css";
 import React from "react";
 import type { Metadata } from "next";
 import { Toaster } from "@/components/ui/sonner";
+import { Kanit } from "next/font/google";
 
 export const metadata: Metadata = {
   title: {
@@ -12,6 +13,11 @@ export const metadata: Metadata = {
   keywords: ["ohm", "e-commerce", "store"],
 };
 
+const kanit = Kanit({
+  subsets: ["latin"],
+  weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
+});
+
 interface RootLayoutProps {
   children: React.ReactNode;
 }
@@ -19,7 +25,7 @@ interface RootLayoutProps {
 const RootLayout = ({ children }: RootLayoutProps) => {
   return (
     <html lang="en">
-      <body>
+      <body className={kanit.className}>
         {children}
         <Toaster />
       </body>
