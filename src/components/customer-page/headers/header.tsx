@@ -10,7 +10,7 @@ interface HeaderCustomerProps {
 
 const HeaderCustomer = ({ user }: HeaderCustomerProps) => {
   return (
-    <header className="fixed top-0 left-0 inset-x-0 z-40 border-b border-b-border shadow-md">
+    <header className="fixed top-0 left-0 inset-x-0 z-40 border-b border-b-border shadow-md bg-background">
       <div className="max-w-7xl mx-auto px-4 xl:px-0 flex justify-between items-center h-16">
         {/* Icon */}
         <Link href={"/"} className="flex items-center gap-2 text-primary">
