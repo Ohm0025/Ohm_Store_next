@@ -7,7 +7,7 @@ import { CartType } from "@/types/cart";
 import { Minus, Plus, Trash2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import React from "react";
+import React, { useOptimistic, useTransition } from "react";
 import { removeFromCartAction, updateCartAction } from "../actions/carts";
 import { toast } from "sonner";
 
@@ -15,10 +15,76 @@ interface CartItemProps {
   cart: CartType;
 }
 
+interface CartOptimistic {
+  type: "update" | "remove";
+  itemId: string;
+  newCount?: number;
+}
+
 const CartItems = ({ cart }: CartItemProps) => {
+  const [isPending, startTransition] = useTransition();
   // hook that can render ui before waiting backend response
+  const [opCart, updateOpCart] = useOptimistic(
+    cart,
+    (state, { type, itemId, newCount }: CartOptimistic) => {
+      if (type === "update" && newCount !== undefined) {
+        const updatedItems = state.items.map((item) => {
+          if (item.id === itemId) {
+            const newPrice = newCount * item.product.price;
+            return {
+              ...item,
+              count: newCount,
+              price: newPrice,
+            };
+          }
+          return item;
+        });
+
+        const newTotal = updatedItems.reduce(
+          (sum, item) => sum + item.price,
+          0
+        );
+
+        const newItemCount = updatedItems.reduce(
+          (sum, item) => sum + item.count,
+          0
+        );
+
+        return {
+          ...state,
+          items: updatedItems,
+          cartTotal: newTotal,
+          itemCount: newItemCount,
+        };
+      }
+
+      if (type === "remove") {
+        const updatedItems = state.items.filter((item) => item.id !== itemId);
+        const newTotal = updatedItems.reduce(
+          (sum, item) => sum + item.price,
+          0
+        );
+        const newItemCount = updatedItems.reduce(
+          (sum, item) => sum + item.count,
+          0
+        );
+        return {
+          ...state,
+          items: updatedItems,
+          cartTotal: newTotal,
+          itemCount: newItemCount,
+        };
+      }
+
+      return state;
+    }
+  );
 
   const handleUpdateQty = async (itemId: string, newCount: number) => {
+    startTransition(() => {
+      updateOpCart({ type: "update", itemId, newCount });
+    });
+
     const formData = new FormData();
     formData.append("cart-item-id", itemId);
     formData.append("new-count", newCount.toString());
@@ -31,6 +97,9 @@ const CartItems = ({ cart }: CartItemProps) => {
   };
 
   const handleRemoveItem = async (itemId: string) => {
+    startTransition(() => {
+      updateOpCart({ type: "remove", itemId });
+    });
     const result = await removeFromCartAction(itemId);
     if (result && result.message) {
       toast.error(result.message);
@@ -41,7 +110,7 @@ const CartItems = ({ cart }: CartItemProps) => {
     <Card className="p-4">
       <h2 className="text-xl font-semibold mb-4">Cart Item list</h2>
 
-      {cart?.items.map((item, index) => (
+      {opCart?.items.map((item, index) => (
         <div key={index} className="flex flex-col sm:flex-row gap-4 pb-4">
           <div className="relative size-24 border border-primary rounded-md overflow-hidden">
             <Link href={`/products/${item.product.id}`}>
@@ -80,7 +149,7 @@ const CartItems = ({ cart }: CartItemProps) => {
                   onClick={() => handleUpdateQty(item.id, item.count - 1)}
                   variant={"outline"}
                   className="size-8"
-                  disabled={item.count <= 1}>
+                  disabled={item.count <= 1 || isPending}>
                   <Minus size={14} />
                 </Button>
                 <span className="w-10 text-center">{item.count}</span>
@@ -88,7 +157,7 @@ const CartItems = ({ cart }: CartItemProps) => {
                   onClick={() => handleUpdateQty(item.id, item.count + 1)}
                   variant={"outline"}
                   className="size-8"
-                  disabled={item.count >= item.product.stock}>
+                  disabled={item.count >= item.product.stock || isPending}>
                   <Plus size={14} />
                 </Button>
               </div>
