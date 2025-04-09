@@ -38,5 +38,6 @@ export const config = {
     "/",
     "/auth/:path*", // /auth /auth/signup /auth/signin
     "/admin/:path*",
+    "/cart/:path*",
   ],
 };
