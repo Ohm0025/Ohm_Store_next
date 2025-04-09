@@ -3,6 +3,7 @@ import React from "react";
 import { headers } from "next/headers";
 import { getUserCart } from "@/features/carts/db/carts";
 import EmptyCart from "@/features/carts/components/empty-cart";
+import CartSummary from "@/features/carts/components/card-summary";
 
 const CartPage = async () => {
   const head = await headers();
@@ -22,7 +23,7 @@ const CartPage = async () => {
           </div>
 
           <div className="lg:col-span-1">
-            <div>Cart Summary</div>
+            <CartSummary cart={cart} />
           </div>
         </div>
       )}

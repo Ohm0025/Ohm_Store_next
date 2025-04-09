@@ -22,7 +22,7 @@ interface CartOptimistic {
 }
 
 const CartItems = ({ cart }: CartItemProps) => {
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
   // hook that can render ui before waiting backend response
   const [opCart, updateOpCart] = useOptimistic(
     cart,
@@ -149,7 +149,7 @@ const CartItems = ({ cart }: CartItemProps) => {
                   onClick={() => handleUpdateQty(item.id, item.count - 1)}
                   variant={"outline"}
                   className="size-8"
-                  disabled={item.count <= 1 || isPending}>
+                  disabled={item.count <= 1}>
                   <Minus size={14} />
                 </Button>
                 <span className="w-10 text-center">{item.count}</span>
@@ -157,7 +157,7 @@ const CartItems = ({ cart }: CartItemProps) => {
                   onClick={() => handleUpdateQty(item.id, item.count + 1)}
                   variant={"outline"}
                   className="size-8"
-                  disabled={item.count >= item.product.stock || isPending}>
+                  disabled={item.count >= item.product.stock}>
                   <Plus size={14} />
                 </Button>
               </div>
