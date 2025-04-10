@@ -1,4 +1,5 @@
 import { authCheck } from "@/features/auths/db/auth";
+import { getUserCart } from "@/features/carts/db/carts";
 import CheckoutForm from "@/features/orders/components/checkout-form";
 import CheckoutSummary from "@/features/orders/components/checkout-summary";
 import { redirect } from "next/navigation";
@@ -9,6 +10,13 @@ const CheckoutPage = async () => {
   if (!user) {
     redirect("/auth/signin");
   }
+
+  const cart = await getUserCart(user.id);
+
+  if (!cart || cart.products.length === 0) {
+    redirect("/cart");
+  }
+
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold mb-6">Payment</h1>
@@ -16,9 +24,9 @@ const CheckoutPage = async () => {
         <div className="lg:col-span-2">
           <CheckoutForm user={user} />
         </div>
-      </div>
-      <div className="lg:col-span-1">
-        <CheckoutSummary />
+        <div className="lg:col-span-1">
+          <CheckoutSummary cart={cart} />
+        </div>
       </div>
     </div>
   );

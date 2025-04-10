@@ -77,9 +77,10 @@ export const createOrder = async (input: CheckoutInput) => {
 
       for (const item of cart.products) {
         const product = await prisma.product.findUnique({
-          where: { id: item.id },
+          where: { id: item.productId },
           include: { images: true },
         });
+
         if (!product || product.stock < item.count) {
           throw new Error(`${product?.title} out of stock`);
         }

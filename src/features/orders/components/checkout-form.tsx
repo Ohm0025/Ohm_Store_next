@@ -1,3 +1,5 @@
+"use client";
+
 import InputForm from "@/components/shared/InputForm";
 import SubmitBtn from "@/components/shared/SubmitBtn";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,6 +11,8 @@ import { ShoppingBag } from "lucide-react";
 import Form from "next/form";
 import React from "react";
 import { checkoutAction } from "../actions/orders";
+import { useForm } from "@/hooks/useForm";
+import ErrorMessage from "@/components/shared/errorMessage";
 
 interface CheckoutFormProps {
   user: UserType;
@@ -16,12 +20,14 @@ interface CheckoutFormProps {
 
 const CheckoutForm = ({ user }: CheckoutFormProps) => {
   const hasUserData = !!(user.address && user.tel);
+  const { errors, formAction, isPending, clearErrors } =
+    useForm(checkoutAction);
   return (
     <Card>
       <CardHeader>
         <CardTitle className="text-lg">Address Details</CardTitle>
       </CardHeader>
-      <Form action={checkoutAction}>
+      <Form action={formAction} onChange={clearErrors}>
         <CardContent className="flex flex-col gap-4">
           {hasUserData && (
             <div className="flex items-center space-x-2 mb-4 border p-3 rounded-md bg-muted/5">
@@ -43,6 +49,7 @@ const CheckoutForm = ({ user }: CheckoutFormProps) => {
               required
             />
             {/* Error Message */}
+            {errors.phone && <ErrorMessage error={errors.phone[0]} />}
           </div>
 
           <div className="flex flex-col gap-2">
@@ -58,6 +65,7 @@ const CheckoutForm = ({ user }: CheckoutFormProps) => {
               className="min-h-24"
             />
             {/* Error message */}
+            {errors.address && <ErrorMessage error={errors.address[0]} />}
           </div>
 
           <div className="flex flex-col gap-2">
@@ -69,10 +77,12 @@ const CheckoutForm = ({ user }: CheckoutFormProps) => {
               className="min-h-20"
             />
             {/* Error message */}
+            {errors.note && <ErrorMessage error={errors.note[0]} />}
           </div>
 
           <div className="pt-4">
             <SubmitBtn
+              pending={isPending}
               name="Proceed Payment"
               icon={ShoppingBag}
               className="w-full"

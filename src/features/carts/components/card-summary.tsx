@@ -44,6 +44,8 @@ const CartSummary = ({ cart }: CartSummaryProps) => {
     }
   };
 
+  const shippingFee = 50;
+
   return (
     <Card className="p-4">
       <h2 className="text-xl font-semibold mb-4">Purchase Summary</h2>
@@ -54,7 +56,7 @@ const CartSummary = ({ cart }: CartSummaryProps) => {
 
       <div className="flex justify-between text-muted-foreground">
         <span>Delivery Fee</span>
-        <span>Free</span>
+        <span>{shippingFee}</span>
       </div>
 
       <Separator />
