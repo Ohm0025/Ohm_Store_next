@@ -1,7 +1,11 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { createOrder } from "../db/orders";
+import {
+  cancelOrderStatus,
+  createOrder,
+  uploadPaymentSlip,
+} from "../db/orders";
 import { InitialFormState } from "@/types/action";
 
 export const checkoutAction = async (
@@ -25,4 +29,42 @@ export const checkoutAction = async (
   }
 
   redirect(`/my-orders/${result.orderId}`);
+};
+
+export const updatePaymentAction = async (
+  _prevState: InitialFormState,
+  formData: FormData
+) => {
+  const orderId = formData.get("order-id") as string;
+  const paymentImage = formData.get("payment-image") as File;
+
+  const result = await uploadPaymentSlip(orderId, paymentImage);
+
+  return result && result.message
+    ? {
+        success: false,
+        message: result.message,
+      }
+    : {
+        success: true,
+        message: "upload successfully",
+      };
+};
+
+export const cancelOrderStatusAction = async (
+  // _prevState: InitialFormState,
+  formData: FormData
+) => {
+  const orderId = formData.get("order-id") as string;
+  await cancelOrderStatus(orderId);
+  // const result = { message: "" };
+  // return result && result.message
+  //   ? {
+  //       success: false,
+  //       message: result.message,
+  //     }
+  //   : {
+  //       success: true,
+  //       message: "upload successfully",
+  //     };
 };
