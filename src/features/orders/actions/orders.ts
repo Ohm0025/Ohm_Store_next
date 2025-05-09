@@ -52,19 +52,19 @@ export const updatePaymentAction = async (
 };
 
 export const cancelOrderStatusAction = async (
-  // _prevState: InitialFormState,
+  _prevState: InitialFormState,
   formData: FormData
 ) => {
   const orderId = formData.get("order-id") as string;
-  await cancelOrderStatus(orderId);
-  // const result = { message: "" };
-  // return result && result.message
-  //   ? {
-  //       success: false,
-  //       message: result.message,
-  //     }
-  //   : {
-  //       success: true,
-  //       message: "upload successfully",
-  //     };
+  const result = await cancelOrderStatus(orderId);
+
+  return result && result.message
+    ? {
+        success: false,
+        message: result.message,
+      }
+    : {
+        success: true,
+        message: "cancel order successfully",
+      };
 };
