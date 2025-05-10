@@ -5,13 +5,18 @@ import { checkoutSchema } from "../shemas/orders";
 import { db } from "@/lib/db";
 import { generateNumberOrder } from "@/lib/generateOrderNumber";
 import { clearCart } from "@/features/carts/db/carts";
-import { getOrderIdTag, revalidateOrderCache } from "./cache";
+import {
+  getOrderGlobalTag,
+  getOrderIdTag,
+  revalidateOrderCache,
+} from "./cache";
 import {
   unstable_cacheLife as cacheLife,
   unstable_cacheTag as cacheTag,
 } from "next/cache";
 import formatDate from "@/lib/formatDate";
 import { uploadToImageKit } from "@/lib/imageKit";
+import { OrderStatus } from "@prisma/client";
 
 interface CheckoutInput {
   address: string;
@@ -187,6 +192,59 @@ export const getOrderById = async (userId: string, orderId: string) => {
   } catch (error) {
     console.error("Error at getting order : ", error);
     return null;
+  }
+};
+
+export const getAllOrders = async (userId: string, status?: OrderStatus) => {
+  "use cache";
+
+  if (!userId) {
+    redirect("/auth/signin");
+  }
+
+  cacheLife("minutes");
+  cacheTag(getOrderGlobalTag());
+
+  try {
+    const orders = await db.order.findMany({
+      where: status ? { status } : {},
+      include: {
+        customer: true,
+        items: {
+          include: {
+            product: {
+              include: {
+                category: true,
+                images: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const orderDetails = orders.map((order) => {
+      return {
+        ...order,
+        items: order.items.map((item) => {
+          const mainImage = item.product.images.find((image) => image.isMain);
+          return {
+            ...item.product,
+            lowStock: 5,
+            sku: item.productId.substring(0, 8).toUpperCase(),
+            mainImage,
+          };
+        }),
+        createdAtFormatted: formatDate(order.createdAt),
+        paymentFormatted: order.paymentAt ? formatDate(order.paymentAt) : null,
+        totalItems: order.items.reduce((sum, item) => sum + item.quantity, 0),
+      };
+    });
+
+    return orderDetails;
+  } catch (error) {
+    console.error("Error getting all orders : ", error);
+    return [];
   }
 };
 

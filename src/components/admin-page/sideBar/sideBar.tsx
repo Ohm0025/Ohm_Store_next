@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { useSideBar } from "@/providers/sideBarProvider";
 import { UserType } from "@/types/user";
 import {
+  ClipboardList,
   FolderTree,
   LayoutDashboard,
   LogOut,
@@ -40,6 +41,11 @@ const SideBarAdmin = ({ user }: SideBarAdminProps) => {
       label: "Products",
       href: "/admin/products",
       icon: <ShoppingCart size={20} />,
+    },
+    {
+      label: "Orders",
+      href: "/admin/orders",
+      icon: <ClipboardList size={20} />,
     },
   ];
   const pathname = usePathname();

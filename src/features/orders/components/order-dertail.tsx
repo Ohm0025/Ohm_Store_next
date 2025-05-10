@@ -219,6 +219,25 @@ const OrderDetail = ({ order }: OrderDetailProps) => {
                 />
               </div>
             )}
+
+            {order.paymentImage && (
+              <div className="flex flex-col gap-2 pt-2">
+                <h3 className="font-medium">Payment slip :</h3>
+                <div className="relative aspect-square w-full rounded-md overflow-hidden border">
+                  <Image
+                    alt="Payment slip"
+                    src={order.paymentImage}
+                    fill
+                    className="object-contain"
+                  />
+                </div>
+                {order.paymentAt && (
+                  <p className="text-sm text-muted-foreground">
+                    Payment At : {order.paymentAtFormatted}
+                  </p>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
