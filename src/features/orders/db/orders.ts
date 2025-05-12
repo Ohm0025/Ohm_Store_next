@@ -1,6 +1,10 @@
 import { authCheck } from "@/features/auths/db/auth";
 import { redirect } from "next/navigation";
-import { canCancelOrder, canCreateOrder } from "../permissions/orders";
+import {
+  canCancelOrder,
+  canCreateOrder,
+  canUpdateStatusOrder,
+} from "../permissions/orders";
 import { checkoutSchema } from "../shemas/orders";
 import { db } from "@/lib/db";
 import { generateNumberOrder } from "@/lib/generateOrderNumber";
@@ -23,6 +27,12 @@ interface CheckoutInput {
   phone: string;
   note?: string;
   useProfileData?: string;
+}
+
+interface UpdateOrderStatus {
+  orderId: string;
+  status: string;
+  trackingNumber?: string;
 }
 
 export const createOrder = async (input: CheckoutInput) => {
@@ -365,6 +375,44 @@ export const cancelOrderStatus = async (orderId: string) => {
     console.error("Error cancelling order : ", error);
     return {
       message: "Something went wrong in cancelling order",
+    };
+  }
+};
+
+export const updateOrderStatus = async (input: UpdateOrderStatus) => {
+  const user = await authCheck();
+  if (!user || !canUpdateStatusOrder(user)) {
+    redirect("/");
+  }
+
+  try {
+    const order = await db.order.findUnique({
+      where: { id: input.orderId },
+    });
+
+    if (!order) {
+      return {
+        message: "Order not found",
+      };
+    }
+
+    if (input.status === "Cancelled") {
+      await cancelOrderStatus(order.id);
+    }
+
+    const updatedOrder = await db.order.update({
+      where: { id: order.id },
+      data: {
+        status: input.status as OrderStatus,
+        trackingNumber: input.trackingNumber || null,
+      },
+    });
+
+    revalidateOrderCache(updatedOrder.id, updatedOrder.customerId);
+  } catch (error) {
+    console.error("Error updating order status : ", error);
+    return {
+      message: "Something went wrong at update order's status",
     };
   }
 };
