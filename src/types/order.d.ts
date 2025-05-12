@@ -9,4 +9,5 @@ export interface OrderType extends Order {
   customer: UserType;
   createdAtFormatted: string;
   paymentAtFormatted?: string | null;
+  totalItems?: number;
 }
