@@ -76,5 +76,15 @@ export const updateOrderStatusAction = async (formData: FormData) => {
     status: formData.get("status") as string,
     trackingNumber: formData.get("tracking-number") as string,
   };
-  await updateOrderStatus(data);
+  const result = await updateOrderStatus(data);
+
+  return result && result.message
+    ? {
+        success: false,
+        message: result.message,
+      }
+    : {
+        success: true,
+        message: "Update order status successfully",
+      };
 };
