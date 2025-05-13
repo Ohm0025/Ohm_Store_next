@@ -37,12 +37,25 @@ import React, { useEffect, useState } from "react";
 import DeleteProductModal from "./delete-product-modal";
 import RestoreProductModal from "./restore-product-modal";
 import ProductDetailModal from "./product-detail-modal";
+import { useRouter, useSearchParams } from "next/navigation";
 
 interface ProductListProps {
   products: ProductType[];
+  totalCount: number;
+  page: number;
+  limit: number;
 }
 
-const ProductList = ({ products }: ProductListProps) => {
+const ProductList = ({
+  products,
+  totalCount,
+  page,
+  limit,
+}: ProductListProps) => {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const totalPage = Math.ceil(totalCount / limit);
+
   const [activeTab, setActiveTab] = useState("all");
   const [filteredProducts, setFilteredProducts] = useState(products);
   const [searchTerm, setSearchTerm] = useState("");
@@ -95,6 +108,12 @@ const ProductList = ({ products }: ProductListProps) => {
 
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
+  };
+
+  const handlePageChange = (newPage: number) => {
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set("page", newPage.toString());
+    router.push(`/admin/products?${newParams.toString()}`);
   };
   return (
     <>
@@ -287,6 +306,22 @@ const ProductList = ({ products }: ProductListProps) => {
               )}
             </TableBody>
           </Table>
+
+          <div className="flex justify-between items-center mt-4">
+            <Button
+              disabled={page <= 1}
+              onClick={() => handlePageChange(page - 1)}>
+              Previous
+            </Button>
+            <span>
+              Page {page} of {totalPage}
+            </span>
+            <Button
+              disabled={page >= totalPage}
+              onClick={() => handlePageChange(page + 1)}>
+              Next
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
