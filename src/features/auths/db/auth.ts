@@ -3,8 +3,11 @@ import { revalidateUserCache } from "@/features/users/db/cache";
 import { getUserById } from "@/features/users/db/users";
 import { db } from "@/lib/db";
 import { hash, genSalt, compare } from "bcrypt";
-import { SignJWT } from "jose";
+import { jwtVerify, SignJWT } from "jose";
 import { cookies, headers } from "next/headers";
+import { Resend } from "resend";
+import EmailTemplate from "../components/email-template";
+import { JWTExpired } from "jose/errors";
 
 interface SignupInput {
   name: string;
@@ -18,12 +21,18 @@ interface SigninInput {
   password: string;
 }
 
-const generateJwtToken = async (userId: string) => {
+interface ResetPasswordInput {
+  token: string;
+  password: string;
+  confirmPassword: string;
+}
+
+const generateJwtToken = async (userId: string, exp: string = "30d") => {
   const secret = new TextEncoder().encode(process.env.JWT_SECRET_KEY); //convert string to Uint8Array (for jose library)
   return await new SignJWT({ id: userId })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt() //iat : ms
-    .setExpirationTime("30d") //exp : ms
+    .setExpirationTime(exp) //exp : ms
     .sign(secret);
 };
 
@@ -147,5 +156,70 @@ export const signout = async () => {
   } catch (err) {
     console.error("Error sign out user : ", err);
     return { message: "There is error at sign out function" };
+  }
+};
+
+export const sendResetPasswordEmail = async (email: string) => {
+  const resend = new Resend(process.env.RESEND_API_KEY);
+  try {
+    const user = await db.user.findUnique({ where: { email } });
+    if (!user) {
+      return {
+        message: "user not found",
+      };
+    }
+
+    const token = await generateJwtToken(user.id, "15m");
+
+    const resendLink = `${process.env.NEXT_PUBLIC_BASEURL}/auth/reset-password?token=${token}`;
+
+    const result = await resend.emails.send({
+      from: "Ohm Store <onboarding@resend.dev>",
+      to: email,
+      subject: "Reset your password",
+      react: EmailTemplate({ fname: user.name || user.email, resendLink }),
+    });
+
+    console.log(result);
+  } catch (error) {
+    console.error("Error at sending reset password email : ", error);
+    return {
+      message: "Something wrong at sending reset password",
+    };
+  }
+};
+
+export const resetPassword = async (input: ResetPasswordInput) => {
+  try {
+    const secret = new TextEncoder().encode(process.env.JWT_SECRET_KEY);
+    const { payload } = await jwtVerify(input.token, secret);
+
+    if (input.password !== input.confirmPassword) {
+      return {
+        message: "password not match",
+      };
+    }
+
+    const salt = await genSalt(10);
+    const hashedPassword = await hash(input.password, salt);
+
+    const updatedUser = await db.user.update({
+      where: { id: payload.id as string },
+      data: {
+        password: hashedPassword,
+      },
+    });
+
+    revalidateUserCache(updatedUser.id);
+  } catch (error) {
+    console.error("Error reseting password : ", error);
+    if (error instanceof JWTExpired) {
+      return {
+        message: "Your request is expired.",
+      };
+    }
+    return {
+      message: "Something wrong at reseting password",
+    };
   }
 };
